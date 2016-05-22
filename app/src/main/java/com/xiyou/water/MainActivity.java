@@ -1,11 +1,15 @@
 package com.xiyou.water;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.amap.api.location.AMapLocation;
@@ -13,6 +17,7 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps2d.AMap;
+import com.amap.api.maps2d.CameraUpdateFactory;
 import com.amap.api.maps2d.LocationSource;
 import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.model.BitmapDescriptorFactory;
@@ -33,14 +38,39 @@ public class MainActivity extends Activity implements LocationSource,
     private LocationSource.OnLocationChangedListener mListener;
     private AMapLocationClient mlocationClient;
     private AMapLocationClientOption mLocationOption;
+    final int MY_PERMISSIONS_ACCESS_COARSE_LOCATION = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.map);
         mapView.onCreate(savedInstanceState);// 此方法必须重写
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            //申请WRITE_EXTERNAL_STORAGE权限
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    MY_PERMISSIONS_ACCESS_COARSE_LOCATION);
+        }
         init();
     }
+            @Override
+            public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+            {
+
+                if (requestCode == MY_PERMISSIONS_ACCESS_COARSE_LOCATION)
+                {
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    {
+//                       ToastUtil.show(MainActivity.this,"haha");
+                    } else
+                    {
+                        MainActivity.this.finish();
+                    }
+                    return;
+                }
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            }
 
     /**
      * 初始化AMap对象
@@ -48,6 +78,7 @@ public class MainActivity extends Activity implements LocationSource,
     private void init() {
         if (aMap == null) {
             aMap = mapView.getMap();
+
             setUpMap();
         }
     }
@@ -65,6 +96,7 @@ public class MainActivity extends Activity implements LocationSource,
         // myLocationStyle.anchor(int,int)//设置小蓝点的锚点
         myLocationStyle.strokeWidth(1.0f);// 设置圆形的边框粗细
         aMap.setMyLocationStyle(myLocationStyle);
+        aMap.moveCamera(CameraUpdateFactory.zoomTo(8));
         aMap.setLocationSource(this);// 设置定位监听
         aMap.getUiSettings().setMyLocationButtonEnabled(true);// 设置默认定位按钮是否显示
         aMap.setMyLocationEnabled(true);// 设置为true表示显示定位层并可触发定位，false表示隐藏定位层并不可触发定位，默认是false
@@ -90,6 +122,7 @@ public class MainActivity extends Activity implements LocationSource,
                 .position(Constants.CHENGDU).title("成都市水质监测点")
                 .snippet("PH:6.3-7.5\n电导率:<1400\n肉眼可见颗粒:无").draggable(false));
     }
+
 
     /**
      * 方法必须重写
